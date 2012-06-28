@@ -1,6 +1,8 @@
+require 'rubygems'
 require 'mechanize'
 require 'cinch'
 require 'json'
+require 'twitter'
 $LOAD_PATH << '.'
 require 'mpdcontroller.rb'
 
@@ -11,6 +13,15 @@ bot = Cinch::Bot.new do
     c.channels = ["#tooly"]
     c.plugins.plugins = [MPDController]
   end
+  Twitter::Client.configure do |conf|
+    conf.proxy_host = 'www-proxy.cs.tcd.ie'
+    conf.proxy_port = 8080
+  end
+
+  twitter = Twitter::Client.new(:oauth_access => {
+  :key => "MYPUBLIC", :secret => "MYSECRET" })
+
+
   mech = Mechanize.new
   mech.set_proxy("www-proxy.cs.tcd.ie", 8080)
   mech.max_history = 1
@@ -23,17 +34,18 @@ bot = Cinch::Bot.new do
 			end
 
   helpers do
-    def fetch_tweet(mech, url)
+    def fetch_tweet(twitter, url)
+      screen_name = url.match(/!|\.com\/(.+?)\/stat/)[1]
   	  id = url.match(/\/(\d+)/)[1]
-  	  tweet_data = JSON.parse(mech.get("https://api.twitter.com/1/statuses/show.json?id=#{id}").content)
-  	  "@#{tweet_data['user']['screen_name']}: " + tweet_data["text"]
+      tweet = twitter.status(:get, id)
+  	  "@#{screen_name}: " + tweet.text
     end
   end
 
   on :message, /^(?!\$).*((http|https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(([0-9]{1,5})?\/.*)?$)/ix do |m,text|
     ignorelist.each{|item| return if text.include? item}
   	if text.include? "twitter.com"
-  	  m.reply fetch_tweet(mech, text)
+  	  m.reply fetch_tweet(twitter, text)
   	  return
   	end
     title = mech.get(text).title

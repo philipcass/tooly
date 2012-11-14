@@ -3,24 +3,28 @@ require 'mechanize'
 require 'cinch'
 require 'json'
 require 'twitter'
+require 'uri'
 $LOAD_PATH << '.'
-require 'mpdcontroller.rb'
+#require 'mpdcontroller.rb'
 
 bot = Cinch::Bot.new do
   configure do |c|
     c.server = "irc.netsoc.tcd.ie"
     c.nick     = "tooly"
-    c.channels = ["#tooly"]
-    c.plugins.plugins = [MPDController]
+    c.channels = ["#ducss","#wowfag","#tcd2014","#foodie","#sc2"]
+#    c.channels = ["#lolol"]
+#    c.plugins.plugins = [MPDController]
   end
-  Twitter::Client.configure do |conf|
-    conf.proxy_host = 'www-proxy.cs.tcd.ie'
-    conf.proxy_port = 8080
+  Twitter.configure do |conf|
+    conf.consumer_key = "*MY_VALUE*"
+    conf.consumer_secret = "*MY_VALUE*"
   end
+  Twitter.connection_options[:proxy] = "http://ducss.ie:3128"
 
-  twitter = Twitter::Client.new(:oauth_access => {
-  :key => "MYPUBLIC", :secret => "MYSECRET" })
-
+  twitter = Twitter::Client.new(
+  :oauth_token => "*MY_VALUE*" )
+  URI::DEFAULT_PARSER.regexp[:ABS_URI]
+  url_regex = URI.regexp(['http','https'])
 
   mech = Mechanize.new
   mech.set_proxy("www-proxy.cs.tcd.ie", 8080)
@@ -37,17 +41,19 @@ bot = Cinch::Bot.new do
     def fetch_tweet(twitter, url)
       screen_name = url.match(/!|\.com\/(.+?)\/stat/)[1]
   	  id = url.match(/\/(\d+)/)[1]
-      tweet = twitter.status(:get, id)
+      tweet = twitter.status(id)
   	  "@#{screen_name}: " + tweet.text
     end
   end
 
-  on :message, /^(?!\$).*((http|https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(([0-9]{1,5})?\/.*)?$)/ix do |m,text|
-    ignorelist.each{|item| return if text.include? item}
+  on :message, url_regex do |m,text|
+     text = URI.extract(m.message).map {|x| x if x.include? "http"}.compact.first
+     ignorelist.each{|item| return if text.include? item}
   	if text.include? "twitter.com"
   	  m.reply fetch_tweet(twitter, text)
   	  return
   	end
+     puts text
     title = mech.get(text).title
     title.gsub!(/[^[:graph:] ]/, '')
     title.gsub!(/ {2}/,'')

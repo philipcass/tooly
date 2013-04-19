@@ -59,7 +59,7 @@ bot = Cinch::Bot.new do
     title.gsub!(/[^[:graph:] ]/, '')
     title.gsub!(/ {2}/,'')
     GC.start
-    if title.length > 90 do
+    if title.length > 90
       title = title[0..90] + '…'
     end
     m.reply "Title: " + title

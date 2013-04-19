@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'rubygems'
 require 'mechanize'
 require 'cinch'
@@ -30,54 +31,57 @@ bot = Cinch::Bot.new do
   mech.set_proxy("www-proxy.cs.tcd.ie", 8080)
   mech.max_history = 1
   ignorelist = if File.exists?('ignorelist')
-			  File.open('ignorelist') do|file|
-			    Marshal.load(file)
-			  end
-			else
-			  []
-			end
+                 File.open('ignorelist') do |file|
+                   Marshal.load(file)
+                 end
+               else
+                 []
+               end
 
   helpers do
     def fetch_tweet(twitter, url)
       screen_name = url.match(/!|\.com\/(.+?)\/stat/)[1]
-  	  id = url.match(/\/(\d+)/)[1]
+      id = url.match(/\/(\d+)/)[1]
       tweet = twitter.status(id)
-  	  "@#{screen_name}: " + tweet.text
+      "@#{screen_name}: " + tweet.text
     end
   end
 
   on :message, url_regex do |m,text|
-     text = URI.extract(m.message).map {|x| x if x.include? "http"}.compact.first
-     ignorelist.each{|item| return if text.include? item}
-  	if text.include? "twitter.com"
-  	  m.reply fetch_tweet(twitter, text)
-  	  return
-  	end
-     puts text
+    text = URI.extract(m.message).map {|x| x if x.include? "http"}.compact.first
+    ignorelist.each{|item| return if text.include? item}
+    if text.include? "twitter.com"
+      m.reply fetch_tweet(twitter, text)
+      return
+    end
+    puts text
     title = mech.get(text).title
     title.gsub!(/[^[:graph:] ]/, '')
     title.gsub!(/ {2}/,'')
     GC.start
-    m.reply "Title: "+ title[0..90] 
+    if title.length > 90 do
+      title = title[0..90] + '…'
+    end
+    m.reply "Title: " + title
   end
   
   on :message, /\$ignore (.*)/ do |m,text|
     ignorelist << text
-  	ignorelist.uniq!
-  	File.open('ignorelist','w') do|file|
-  	  Marshal.dump(ignorelist, file)
-  	end
+    ignorelist.uniq!
+    File.open('ignorelist','w') do|file|
+      Marshal.dump(ignorelist, file)
+    end
 
-  	m.reply "Now ignoring: #{ignorelist}"
+    m.reply "Now ignoring: #{ignorelist}"
   end
 
   on :message, /\$unignore (.*)/ do |m,text|
     ignorelist.delete(text)
-  	File.open('ignorelist','w') do|file|
-  	  Marshal.dump(ignorelist, file)
-  	end
+    File.open('ignorelist','w') do|file|
+      Marshal.dump(ignorelist, file)
+    end
 
-	  m.reply "Now ignoring: #{ignorelist}"
+    m.reply "Now ignoring: #{ignorelist}"
   end
   
 end

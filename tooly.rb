@@ -31,12 +31,12 @@ bot = Cinch::Bot.new do
   mech.set_proxy("www-proxy.cs.tcd.ie", 8080)
   mech.max_history = 1
   ignorelist = if File.exists?('ignorelist')
-              File.open('ignorelist') do|file|
-                Marshal.load(file)
-              end
-            else
-              []
-            end
+                 File.open('ignorelist') do |file|
+                   Marshal.load(file)
+                 end
+               else
+                 []
+               end
 
   helpers do
     def fetch_tweet(twitter, url)
@@ -48,13 +48,13 @@ bot = Cinch::Bot.new do
   end
 
   on :message, url_regex do |m,text|
-     text = URI.extract(m.message).map {|x| x if x.include? "http"}.compact.first
-     ignorelist.each{|item| return if text.include? item}
+    text = URI.extract(m.message).map {|x| x if x.include? "http"}.compact.first
+    ignorelist.each{|item| return if text.include? item}
     if text.include? "twitter.com"
       m.reply fetch_tweet(twitter, text)
       return
     end
-     puts text
+    puts text
     title = mech.get(text).title
     title.gsub!(/[^[:graph:] ]/, '')
     title.gsub!(/ {2}/,'')
@@ -81,7 +81,7 @@ bot = Cinch::Bot.new do
       Marshal.dump(ignorelist, file)
     end
 
-      m.reply "Now ignoring: #{ignorelist}"
+    m.reply "Now ignoring: #{ignorelist}"
   end
   
 end

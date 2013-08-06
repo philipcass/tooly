@@ -5,6 +5,7 @@ require 'cinch'
 require 'json'
 require 'twitter'
 require 'uri'
+require 'cgi'
 $LOAD_PATH << '.'
 #require 'mpdcontroller.rb'
 
@@ -43,7 +44,7 @@ bot = Cinch::Bot.new do
       screen_name = url.match(/!|\.com\/(.+?)\/stat/)[1]
       id = url.match(/\/(\d+)/)[1]
       tweet = twitter.status(id)
-      "@#{screen_name}: " + tweet.text
+      "@#{screen_name}: " +  CGI.unescapeHTML(tweet.text)
     end
   end
 

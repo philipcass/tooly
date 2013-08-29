@@ -50,7 +50,7 @@ bot = Cinch::Bot.new do
   on :message, url_regex do |m,text|
     text = URI.extract(m.message).map {|x| x if x.include? "http"}.compact.first
     ignorelist.each{|item| return if text.include? item}
-    if text.include? "twitter.com"
+    if text.include? "twitter.com" and text.include? "/status/"
       m.reply fetch_tweet(twitter, text)
       return
     end

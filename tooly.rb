@@ -12,7 +12,7 @@ $LOAD_PATH << '.'
 bot = Cinch::Bot.new do
   configure do |c|
     c.server = "irc.netsoc.tcd.ie"
-    c.nick     = "newly"
+    c.nick     = "tooly"
     c.channels = ["#ducss","#wowfag","#tcd2014","#foodie","#sc2"]
   end
 
@@ -47,27 +47,38 @@ bot = Cinch::Bot.new do
       "@#{screen_name}: " +  CGI.unescapeHTML(tweet.text)
     end
 
-    def is_admin?(admins, user)
-	admins.include? user
-    end
   end
 
   on :private, /^join (.+)/ do |m, channel|
-    bot.join(channel) if is_admin?(admins, m.user.nick)
+    if admins.include? m.user.nick
+      bot.join(channel)
+      m.reply "Joining #{channel}"
+    else
+      m.reply "You are not allowed send me commands!"
+    end
   end
   
   on :private, /^part (.+)/ do |m, channel|
-    bot.part(channel) if is_admin?(admins, m.user.nick)
+    if admins.include? m.user.nick
+      bot.part(channel)
+      m.reply "Parting from #{channel}"
+    else
+      m.reply "You are not allowed send me commands!"
+    end
   end
 
   on :private, /^allow (.+)/ do |m, user|
-    admins << user if is_admin?(admins, m.user.nick)
-    m.reply "Now accepting commands from #{user}"
+    if admins.include? m.user.nick
+      admins << user.user.nick
+      m.reply "Now accepting commands from #{user}"
+    else
+      m.reply "You are not allowed send me commands!"
+    end
   end
 
   on :private, /^disallow (.+)/ do |m, user|
-    unless user == "WEH" 
-      admins.delete user if is_admin?(admins, m.user.nick)
+    if admins.include? m.user.nick
+      admins.delete user unless user == "WEH"
       m.reply "Not accepting commands from #{user}"
     end
   end

@@ -12,11 +12,11 @@ $LOAD_PATH << '.'
 bot = Cinch::Bot.new do
   configure do |c|
     c.server = "irc.netsoc.tcd.ie"
-    c.nick     = "tooly"
+    c.nick     = "newly"
     c.channels = ["#ducss","#wowfag","#tcd2014","#foodie","#sc2"]
-#    c.channels = ["#lolol"]
-#    c.plugins.plugins = [MPDController]
   end
+
+  admins = ["WEH"]
   Twitter.configure do |conf|
     conf.consumer_key = "*MY_VALUE*"
     conf.consumer_secret = "*MY_VALUE*"
@@ -46,6 +46,34 @@ bot = Cinch::Bot.new do
       tweet = twitter.status(id)
       "@#{screen_name}: " +  CGI.unescapeHTML(tweet.text)
     end
+
+    def is_admin?(admins, user)
+	admins.include? user
+    end
+  end
+
+  on :private, /^join (.+)/ do |m, channel|
+    bot.join(channel) if is_admin?(admins, m.user.nick)
+  end
+  
+  on :private, /^part (.+)/ do |m, channel|
+    bot.part(channel) if is_admin?(admins, m.user.nick)
+  end
+
+  on :private, /^allow (.+)/ do |m, user|
+    admins << user if is_admin?(admins, m.user.nick)
+    m.reply "Now accepting commands from #{user}"
+  end
+
+  on :private, /^disallow (.+)/ do |m, user|
+    unless user == "WEH" 
+      admins.delete user if is_admin?(admins, m.user.nick)
+      m.reply "Not accepting commands from #{user}"
+    end
+  end
+
+  on :private, /^admins$/ do |m|
+    m.reply admins
   end
 
   on :message, url_regex do |m,text|

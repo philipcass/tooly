@@ -6,6 +6,7 @@ require 'json'
 require 'twitter'
 require 'uri'
 require 'cgi'
+require_relative 'joinpart'
 $LOAD_PATH << '.'
 #require 'mpdcontroller.rb'
 
@@ -14,9 +15,9 @@ bot = Cinch::Bot.new do
     c.server = "irc.netsoc.tcd.ie"
     c.nick     = "tooly"
     c.channels = ["#ducss","#wowfag","#tcd2014","#foodie","#sc2"]
-#    c.channels = ["#lolol"]
-#    c.plugins.plugins = [MPDController]
+    c.plugins.plugins = [JoinPart]
   end
+
   Twitter.configure do |conf|
     conf.consumer_key = "*MY_VALUE*"
     conf.consumer_secret = "*MY_VALUE*"
@@ -46,6 +47,7 @@ bot = Cinch::Bot.new do
       tweet = twitter.status(id)
       "@#{screen_name}: " +  CGI.unescapeHTML(tweet.text)
     end
+
   end
 
   on :message, url_regex do |m,text|
@@ -65,7 +67,7 @@ bot = Cinch::Bot.new do
     end
     m.reply "Title: " + title
   end
-  
+
   on :message, /\$ignore (.*)/ do |m,text|
     ignorelist << text
     ignorelist.uniq!
@@ -84,7 +86,7 @@ bot = Cinch::Bot.new do
 
     m.reply "Now ignoring: #{ignorelist}"
   end
-  
+
 end
 
 bot.start

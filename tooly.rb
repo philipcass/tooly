@@ -6,6 +6,7 @@ require 'json'
 require 'twitter'
 require 'uri'
 require 'cgi'
+require_relative 'joinpart'
 $LOAD_PATH << '.'
 #require 'mpdcontroller.rb'
 
@@ -14,9 +15,9 @@ bot = Cinch::Bot.new do
     c.server = "irc.netsoc.tcd.ie"
     c.nick     = "tooly"
     c.channels = ["#ducss","#wowfag","#tcd2014","#foodie","#sc2"]
+    c.plugins.plugins = [JoinPart]
   end
 
-  admins = ["WEH"]
   Twitter.configure do |conf|
     conf.consumer_key = "*MY_VALUE*"
     conf.consumer_secret = "*MY_VALUE*"
@@ -49,44 +50,6 @@ bot = Cinch::Bot.new do
 
   end
 
-  on :private, /^join (.+)/ do |m, channel|
-    if admins.include? m.user.nick
-      bot.join(channel)
-      m.reply "Joining #{channel}"
-    else
-      m.reply "You are not allowed send me commands!"
-    end
-  end
-  
-  on :private, /^part (.+)/ do |m, channel|
-    if admins.include? m.user.nick
-      bot.part(channel)
-      m.reply "Parting from #{channel}"
-    else
-      m.reply "You are not allowed send me commands!"
-    end
-  end
-
-  on :private, /^allow (.+)/ do |m, user|
-    if admins.include? m.user.nick
-      admins << user.user.nick
-      m.reply "Now accepting commands from #{user}"
-    else
-      m.reply "You are not allowed send me commands!"
-    end
-  end
-
-  on :private, /^disallow (.+)/ do |m, user|
-    if admins.include? m.user.nick
-      admins.delete user unless user == "WEH"
-      m.reply "Not accepting commands from #{user}"
-    end
-  end
-
-  on :private, /^admins$/ do |m|
-    m.reply admins
-  end
-
   on :message, url_regex do |m,text|
     text = URI.extract(m.message).map {|x| x if x.include? "http"}.compact.first
     ignorelist.each{|item| return if text.include? item}
@@ -104,7 +67,7 @@ bot = Cinch::Bot.new do
     end
     m.reply "Title: " + title
   end
-  
+
   on :message, /\$ignore (.*)/ do |m,text|
     ignorelist << text
     ignorelist.uniq!
@@ -123,7 +86,7 @@ bot = Cinch::Bot.new do
 
     m.reply "Now ignoring: #{ignorelist}"
   end
-  
+
 end
 
 bot.start
